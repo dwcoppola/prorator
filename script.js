@@ -47,19 +47,31 @@ function finalizeProrate(obj, available, casepack) {
             output += obj[key]['newQty'];
         }
         return output;
-    } 
+    }
     for (let key in obj) {
         obj[key]['newQty'] = Math.floor(obj[key]['origCases'] * percentage);
     }
-    if (available > sumNewCases(obj)) {
-        for (i = 0; i < available - sumNewCases(obj); i++) {
-            obj[`order-${Number(i) + 1}`][`newQty`] = obj[`order-${Number(i) + 1}`][`newQty`] + 1; 
-        }
-    }
+    const remainder = available - sumNewCases(obj)  
     for (let key in obj) {
         obj[key]['newQty'] = obj[key]['newQty'] * casepack;
     }
+    obj['remainder'] = remainder;
     return obj;
+}
+
+function returnInfoToUser(obj, casepack) {
+    const userData = document.getElementById('userData');
+    userData.value = '';
+    let output = '';
+    for (key in obj) {
+        if (key === 'remainder') {
+            // Do nothing
+        } else {
+            output += `${obj[key].orderNumber}\t${obj[key].newQty}\n`
+        }
+    }
+    output += `\nNOTE: You have ${obj['remainder'] * casepack} pieces (${obj['remainder']} cases) left over to put anywhere.`
+    userData.value = output;
 }
 
 function prorate() {
@@ -69,5 +81,6 @@ function prorate() {
     const data = parseUserInput(userData);
     const objectData = objectifyUserInput(data, casepack);
     const final = finalizeProrate(objectData, available, casepack);
-    console.log(final);
+    returnInfoToUser(final, casepack);
 }
+
