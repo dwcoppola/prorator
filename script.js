@@ -49,7 +49,7 @@ function finalizeProrate(obj, available, casepack) {
         return output;
     }
     for (let key in obj) {
-        obj[key]['newQty'] = Math.floor(obj[key]['origCases'] * percentage);
+        obj[key]['newQty'] = Math.round(obj[key]['origCases'] * percentage, 0);
     }
     const remainder = available - sumNewCases(obj)  
     for (let key in obj) {
@@ -70,6 +70,9 @@ function returnInfoToUser(obj, casepack) {
             output += `${obj[key].orderNumber}\t${obj[key].newQty}\n`
         }
     }
+    // TO DO: Might want to add in a script to handle the overs and unders
+    // Establish a fair rule such as min or max
+    // Might consider factoring in the count of locations into the allocation process
     output += `\nNOTE: You have ${obj['remainder'] * casepack} pieces (${obj['remainder']} cases) left over to put anywhere.`
     userData.value = output;
 }
