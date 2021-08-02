@@ -1,89 +1,58 @@
-function getUserData() {
-    return document.getElementById('userDate').value;
-}
+//  error checking
+//      available must be < sum of input
+//      each qty must be divisible by casepack, i.e. % should equal 0
 
-function parseUserInput(str) {
-    let output = [];
-    for (line of str.split('\n')) {
-        if (line !== '') {
-            output.push(line.split('\t')[0])
-            output.push(Number(line.split('\t')[1]))
+function getData() {
+    const dataDump = document.getElementById('dataDump').value;
+    const splitDump = dataDump.split('\n');
+    const splitLines = splitDump.map(v => v.split('\t'));
+    output = {};
+    for (line of splitLines) {
+        if (line[0] !== '') {
+            output[line[0]] = Number(line[1])
         }
     }
     return output;
 }
 
-function objectifyUserInput(list, casepack){
-    let orders = {};
-    let c = 1;
-    for (let i in list) {   
-        if (i % 2 === 0) {
-            orders[`order-${c}`] = {}
-            orders[`order-${c}`]['orderNumber'] = list[i];
-            orders[`order-${c}`]['origEaches'] = list[Number(i) + 1];
-            orders[`order-${c}`]['origCases'] = list[Number(i) + 1] / casepack;
-            orders[`order-${c}`]['newQty'] = undefined;
-            c++;
-        } else {
-            continue;
-        }
-    }    
-    return orders;
-}
-
-function sum(obj) {
-    let output = 0;
-    for (let key in obj) {
-        output += obj[key]['origCases'];
+function listifyObject(object) {
+    output = [];
+    for (key in object) {
+        output.push(object[key]);
     }
     return output;
 }
 
-function finalizeProrate(obj, available, casepack) {
-    const percentage = available / sum(obj);
-    const sumNewCases = function(obj) {
-        let output = 0;
-        for (let key in obj) {
-            output += obj[key]['newQty'];
-        }
+function prorate(list, casepack, available) {
+    const cartonsAvailable = available / casepack;
+    const convertToCartons = function(list, casepack) {
+        output = [];
+        list.map(v => output.push(v / casepack));
+        return output;    
+    }
+    const sum = function(list) {
+        output = 0;
+        list.map(v => output += v);
         return output;
     }
-    for (let key in obj) {
-        obj[key]['newQty'] = Math.round(obj[key]['origCases'] * percentage, 0);
+    const percentage = Math.round(cartonsAvailable / sum(convertToCartons(list, casepack)) * 100, 0) / 100;
+    const prorateEstimate = convertToCartons(list, casepack).map(v => Math.round(v * percentage));
+    const amountOverOrUnder = sum(prorateEstimate) - cartonsAvailable;
+    const adjust = function(list, offset) {
+        output = [];
+        // adjust down
+        tracker = offset;
+            for (item of list) {
+                if (item === Math.max(...list) && tracker !== 0) {
+                    output.push(item - offset);
+                    tracker -= 1;
+                } else {
+                    output.push(item);
+                }
+            }
+        return output;
     }
-    const remainder = available - sumNewCases(obj)  
-    for (let key in obj) {
-        obj[key]['newQty'] = obj[key]['newQty'] * casepack;
-    }
-    obj['remainder'] = remainder;
-    return obj;
+    const adjustedProrate = adjust(prorateEstimate, amountOverOrUnder);
+    const convertBackToPieces = adjustedProrate.map(v => v * casepack);
+    return convertBackToPieces;
 }
-
-function returnInfoToUser(obj, casepack) {
-    const userData = document.getElementById('userData');
-    userData.value = '';
-    let output = '';
-    for (key in obj) {
-        if (key === 'remainder') {
-            // Do nothing
-        } else {
-            output += `${obj[key].orderNumber}\t${obj[key].newQty}\n`
-        }
-    }
-    // TO DO: Might want to add in a script to handle the overs and unders
-    // Establish a fair rule such as min or max
-    // Might consider factoring in the count of locations into the allocation process
-    output += `\nNOTE: You have ${obj['remainder'] * casepack} pieces (${obj['remainder']} cases) left over to put anywhere.`
-    userData.value = output;
-}
-
-function prorate() {
-    const userData = document.getElementById('userData').value;
-    const casepack = document.getElementById('casepack').value;
-    const available = document.getElementById('available').value / casepack;
-    const data = parseUserInput(userData);
-    const objectData = objectifyUserInput(data, casepack);
-    const final = finalizeProrate(objectData, available, casepack);
-    returnInfoToUser(final, casepack);
-}
-

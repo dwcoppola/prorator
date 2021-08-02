@@ -1,17 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+    <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Proration Station</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="style.css"/>
+        <title>Document</title>
         <script src="script.js" defer></script>
     </head>
     <body>
-        <input id="casepack" type="number" min="1" placeholder="Casepack"/>
-        <input id="available" type="number" placeholder="Available"/>
-        <button onclick="prorate()">PRORATE</button>
-        <br><br>
-        <textarea id="userData" style="width: 450px; height: 600px;"></textarea>
+        <div id="mainContent">
+            <div id="parameters">
+                <input placeholder="Available Quantity (EA)"/>
+                <input type="number" min="1" placeholder="Casepack"/>         
+            </div>
+            <div>
+                <textarea id="dataDump"></textarea>
+            </div>
+            <button onclick="getData()">Process</button>
+        </div>
     </body>
 </html>
